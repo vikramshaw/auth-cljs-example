@@ -117,7 +117,7 @@ For ~Sign-up~ create a file ~signup.cljs.edn~ and add these codes
 4)Create ~login.html~ and ~signup.html~ file in ~resource/public~ folder respectively
 
 *login.html*
-#+ATTR_HTML: :textarea t :width 40
+
 #+BEGIN_EXAMPLE
 <!DOCTYPE html>
 <html>
@@ -134,7 +134,7 @@ For ~Sign-up~ create a file ~signup.cljs.edn~ and add these codes
 </html>
 #+END_EXAMPLE
 *signup.html*
-#+ATTR_HTML: :textarea t :width 40
+
 #+BEGIN_EXAMPLE
 <!DOCTYPE html>
 <html>
