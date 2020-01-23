@@ -1,6 +1,6 @@
 (ns auth-cljs-example.login
    (:require [reagent.core :as r]
-            [ajax.core :refer [GET POST]]))
+             [ajax.core :refer [GET POST]]))
 
 (defn atom-username [value]
   [:input {:type "text"

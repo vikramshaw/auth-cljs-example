@@ -3,8 +3,8 @@
             [compojure.route        :refer [not-found resources]]
             [hiccup.core            :refer :all]
             [hiccup.page            :refer :all]
-            [ring.adapter.jetty     :as jetty]
-            [ring.util.response :as resp]
+            [ring.adapter.jetty     :as    jetty]
+            [ring.util.response     :as    resp]
             [ring.middleware.reload :refer [wrap-reload]]))
 
 (defn foo [request]
@@ -13,7 +13,7 @@
 (defroutes app
   (GET "/" [] foo)
   (GET "/login" [] (resp/resource-response "login.html" {:root "public"}))
-  ;;(GET "/signup" [] (resp/resource-response "signup.html" {:root "public"}))
+  (GET "/signup" [] (resp/resource-response "signup.html" {:root "public"}))
   (resources "/")
   (not-found "<h1>Page not found</h1>"))
 

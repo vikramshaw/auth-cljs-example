@@ -39,14 +39,14 @@
                          :output-to "target/public/cljs-out/login-main.js"
                          :output-dir "target/public/cljs-out/login"
                          :source-map-timestamp true}}
-                 :signup {:source-paths ["src/cljs"]
-                         :figwheel true
-                         :compiler
-                         {:main auth-cljs-example.signup
-                          :asset-path "cljs-out/login"
-                          :output-to "target/public/cljs-out/login-main.js"
-                          :output-dir "target/public/cljs-out/login"
-                          :source-map-timestamp true}}}}
+               :signup {:source-paths ["src/cljs"]
+                        :figwheel true
+                        :compiler
+                        {:main auth-cljs-example.signup
+                         :asset-path "cljs-out/login"
+                         :output-to "target/public/cljs-out/login-main.js"
+                         :output-dir "target/public/cljs-out/login"
+                         :source-map-timestamp true}}}}
 
        :repl-options {:nrepl-middleware [cider.piggieback/wrap-cljs-repl]}
        ;; need to add the compliled assets to the :clean-targets
