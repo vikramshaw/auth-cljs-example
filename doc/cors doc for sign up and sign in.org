@@ -1,0 +1,239 @@
+* Cross-Origin Resource Sharing (CORS)
+*Cross-Origin Resource Sharing (CORS)* is a mechanism that uses additional HTTP headers to tell a browser to let a web application running at one origin 
+(domain) have permission to access selected resources from a server at a different origin. A web application makes a cross-origin HTTP 
+request when it requests a resource that has a different origin (domain, protocol, and port) than its own origin.
+
+If you ever worked with an AJAX call, you are probably familiar with the following error displayed in browser console:
+
+~Failed to load https://example.com/: No ‘Access-Control-Allow-Origin’ header is present on the requested resource. Origin ‘https://anfo.pl' is therefore not allowed access.
+ If an opaque response serves your needs, set the request’s mode to ‘no-cors’ to fetch the resource with CORS disabled.~
+
+If you see this message it means the response failed yet you are still able to see the returned data if you go to the Network tab — what’s the idea here?
+
+The behavior you are observing is the effect of browsers CORS implementation.
+
+Before CORS became standarized there was no way to call an API endpoint under different domain for security reasons. This was (and to some degree still is) blocked by the Same-Origin Policy.
+
+CORS is a mechanism which aims to allow requests made on behalf of you and at the same time block some requests made by rogue JS and is triggered whenever you are making an HTTP request to:
+
+ * A different domain (eg. site at example.com calls api.com)
+ * A different sub domain (eg. site at example.com calls api.example.com)
+ * A different port (eg. site at example.com calls example.com:3001)
+ * A different protocol (eg. site at https://example.com calls http://example.com)
+
+This mechanism prevents attackers that plant scripts on various websites (eg. in ads displayed via Google Ads) to make an AJAX call to www.yourbank.com and 
+in case you were logged in making a transaction using *your* credentials.
+
+If the server does not respond with specific headers to a 
+“simple” GET or POST request — it will still be send, the data still received but the browser will not allow JavaScript to access the response.
+
+If your browser tries to make a “non simple” request (eg. an request that includes cookies, or which Content-type is other than application/x-ww-form-urlencoded, 
+multipart/form-data or text-plain) an mechanism called preflight will be used and an OPTIONS request will be sent to the server.
+
+A common example of “non simple” request is to add cookies or custom headers — it your browser sends such a request and the server does not respond properly, 
+only the preflight call will be made (without the extra headers) but the actual HTTP request the brower meant to make will not be sent.
+
+** Access-Control-Allow-What?
+CORS uses a few HTTP headers — both in request and response — but the ones you must understand in order to be able to continue working are:
+
+*** Access-Control-Allow-Origin
+This header is meant to be returned by the server, and indicate what client-domains are allowed to access its resources. The value can be:
+ * * — allow any domain
+ * A fully qualified domain name (eg. https://example.com)
+
+~If you require the client to pass authentication headers (e.g. cookies) the value can not be * — it must be a fully qualified domain!~
+
+*** Access-Control-Allow-Credentials
+This header is only required to be present in the response if your server supports authentication via cookies. The only valid value for this case is ~true~.
+
+*** Access-Control-Allow-Headers
+Provides a comma separated list of request header values the server is willing to support. If you use custom headers (eg. ~x-authentication-token~ you need to return it in this ACA header response to ~OPTIONS~ call, otherwise the request will be blocked.
+
+*** Access-Control-Expose-Headers
+Similarly, this response should contain a list of headers that will be present in the actual response to the call and should be made available to the client. All other headers will be restricted.
+
+*** Access-Control-Allow-Methods
+A comma separated list of HTTP request type verbs (eg. ~GET, POST~) which the server is willing to support.
+
+*** Origin
+This header is part of the request that the client is making, and will contain the domain from which the application is started. For security reasons browsers will not allow you to overwrite this value.
+
+* Sign-up & Sign-in
+For Sign-in and Sign-up feature we will be using [[https://github.com/JulianBirch/cljs-ajax][CLJS-AJAX]] for ~Auth-cljs-example~ project. But before that we need to create a ~:builds~ for our cljs file in project.clj.
+
+1)Create routes for sign-in and sign-up respectively in *core.clj*
+#+BEGIN_SRC
+(GET "/login" [] (resp/resource-response "login.html" {:root "public"}))
+(GET "/signup" [] (resp/resource-response "signup.html" {:root "public"}))
+#+END_SRC
+
+2)Add ~:dependencies~ and ~:builds~ in project.clj 
+
+*:dependencies*
+#+BEGIN_SRC
+ :dependencies [........
+                [ring/ring-json "0.5.0"]
+                [cljs-ajax "0.8.0"]
+                .......]
+#+END_SRC
+*:builds*
+For Sign-in:
+#+BEGIN_SRC
+:login {:source-paths ["src/cljs"]
+                           :figwheel true
+                           :compiler
+                           {:main auth-cljs-example.login
+                            :asset-path "cljs-out/login"
+                            :output-to "target/public/cljs-out/login-main.js"
+                            :output-dir "target/public/cljs-out/login"
+                            :source-map-timestamp true}}
+#+END_SRC
+
+For Sign-up:
+#+BEGIN_SRC
+:signup {:source-paths ["src/cljs"]
+                           :figwheel true
+                           :compiler
+                           {:main auth-cljs-example.signup
+                            :asset-path "cljs-out/signup"
+                            :output-to "target/public/cljs-out/signup-main.js"
+                            :output-dir "target/public/cljs-out/signup"
+                            :source-map-timestamp true}}
+#+END_SRC
+3)Create a ~builds.cljs.edn~ file in your project
+
+For ~Sign-in~ create a file ~login.cljs.edn~ and add these codes
+#+BEGIN_SRC
+^{:open-url "http://localhost:[[server-port]]/login.html"}
+{:main auth-cljs-example.login}
+#+END_SRC
+
+For ~Sign-up~ create a file ~signup.cljs.edn~ and add these codes
+#+BEGIN_SRC
+^{:open-url "http://localhost:[[server-port]]/signup.html"}
+{:main auth-cljs-example.signup}
+#+END_SRC
+
+4)Create ~login.html~ and ~signup.html~ file in ~resource/public~ folder respectively
+
+*login.html*
+#+ATTR_HTML: :textarea t :width 40
+#+BEGIN_EXAMPLE
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="css/login.css"/>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script src="/cljs-out/login-main.js" type="text/javascript"></script>
+    </body>
+</html>
+#+END_EXAMPLE
+*signup.html*
+#+ATTR_HTML: :textarea t :width 40
+#+BEGIN_EXAMPLE
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="css/signup.css"/>
+    </head>
+    <body>
+        <div id="app"></div>
+        <script src="/cljs-out/signup-main.js" type="text/javascript"></script>
+    </body>
+</html>
+#+END_EXAMPLE
+
+5)Create a ~login.cljs~ file in ~src/cljs~ folder, create a form for ~username~ and ~password~ and add these codes for accessing the data from server side database ~(Stamp project)~
+#+BEGIN_SRC
+(ns auth-cljs-example.login
+  (:require [ajax.core :refer [GET POST]]))
+
+(defn handler [response]
+  (.log js/console (str response)))
+
+(defn error-handler [{:keys [status status-text]}]
+  (.log js/console (str "something bad happened: " status " " status-text)))
+  
+  (POST "http://localhost:4000/create-auth-token"
+    {:params {:username @username
+              :password @password}
+     :handler handler
+     :error-handler error-handler
+     :format :json
+     :keywords? true})
+#+END_SRC
+This url ~http://localhost:4000/create-auth-token~ is from ~Stamp~ project. Now after doing all the above steps for sign-in 
+and submitting the login form after entering the username and password, it will create the ~auth-token~ for the registered user and store in the H2 database, you can also check in console also fro the ~auth-token~.
+
+Create a ~signup.cljs~ file in ~src/cljs~ folder, create a form for ~username~ and ~password~ and add these codes for storing the data in the server side database ~(Stamp project)~
+#+BEGIN_SRC
+(ns auth-cljs-example.signup
+  (:require [ajax.core :refer [GET POST]]))
+
+(defn handler [response]
+  (.log js/console (str "User added successfully" response)))
+
+(defn error-handler [{:keys [status status-text]}]
+  (.log js/console (str "User already exist " status " " status-text)))
+  
+  (POST "http://localhost:4000/sign-up"
+    {:params {:username @username
+              :password @password}
+     :handler handler
+     :error-handler error-handler
+     :format :json
+     :keywords? true})
+#+END_SRC
+This url ~http://localhost:4000/sign-up~ is from ~Stamp~ project. Now after doing all the above steps for sign-up
+and submitting the signup form after entering the username and password, it will register the user and store it in the 
+H2 database, you can also check in console as it will display the message for newly register user as ~User added successfully~
+and for already registered user ~User already exist~
+
+All these are done on the *Client Side~ i.e *Auth-cljs-example* project.On the *Server Side* also we need to add few codes to avoid *CORS ERROR* 
+
+* Server Side (Stamp project)
+1)Add ~:dependency~ in project.clj ~[ring-cors "0.1.13"]~
+
+2)In core.clj add these codes
+#+BEGIN_SRC
+(ns xtnt-auth.core
+  (:require ......
+            [ring.middleware.cors           :refer [wrap-cors]]
+            .......))
+   
+   (defroutes app-routes
+        ..........
+        (POST "/sign-up" [] handlers/sign-up)
+        ........)
+        
+ (def handler
+  (wrap-cors app-routes
+             :access-control-allow-origin [#".*"]
+             :access-control-allow-methods [:get :put :post :delete]
+             :access-control-allow-headers ["accept"
+                                            "origin"
+                                            "accept-encoding"
+                                            "accept-language"
+                                            "content-type"
+                                            "authorization"]
+             :access-control-allow-credentials ["true"]))
+             
+#+END_SRC
+
+
+*** Refernces:-
+[[https://github.com/JulianBirch/cljs-ajax][CLJS-AJAX]]
+
+[[https://www.w3.org/TR/cors/][W3C CORS]]
+
+[[https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS][MDN WEB DOCS FOR CORS]]
+
+[[https://www.codecademy.com/articles/what-is-cors][CODEACADEMY CORS]]

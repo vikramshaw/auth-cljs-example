@@ -1,0 +1,2 @@
+^{:open-url "http://localhost:[[server-port]]/login.html"}
+{:main auth-cljs-example.login}
